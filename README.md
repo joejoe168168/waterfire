@@ -1,8 +1,9 @@
 # waterfire — Water Jac and Fire Jay
 
-A cooperative elemental puzzle platformer with 14 forest-temple levels.
+A cooperative elemental puzzle platformer with 19 forest-temple levels.
 Open `index.html` in any modern browser or publish this folder as a GitHub Pages site.
-`ember-tide.html` is kept as the descriptive source filename; `index.html` is the GitHub entry point.
+`ember-tide.html` is the source filename; run `node sync-entry.cjs` after editing it to update the identical GitHub entry point, `index.html`.
+Keep `forest-polish.js`, `player-experience.js`, and the `assets` folder with the HTML files.
 No build step or server required; Google Fonts is optional.
 
 ## Visual edition
@@ -30,6 +31,29 @@ git remote add origin https://github.com/<your-account>/waterfire.git
 git push -u origin main
 ```
 
+## Controls and layout audit
+
+Jump taps are buffered until the next physics tick, with consistent movement across 30–240 FPS.
+Short taps make smaller jumps; a brief coyote window makes ledge jumps forgiving.
+Holding pause/swap keys triggers once. Losing focus automatically pauses and clears input.
+Touch controls retain finger-sized targets and pointer capture; phone menus use a readable
+portrait layout. Crates float in all pools. Moving platforms stop when a rider would be pinned
+inside a wall. The map uses three rows on desktop and a scrollable grid on phones.
+Existing finale awards migrate from level 14 to level 19 once, preserving progress.
+
+With Playwright and Edge available, run:
+
+```text
+node sync-entry.cjs
+node physics-check.cjs
+node visual-check.cjs
+node layout-check.cjs
+```
+
+These cover all 19 map structures, safe idle spawns and rendering, focused movement and
+hazard scenarios, save migration, keyboard selection, and simultaneous touch move/jump.
+They are regression checks, not proof of a complete two-player solution to every puzzle.
+
 ## Controls
 - Fire Jay: ← → move, ↑ jump — walks through lava, dies in water
 - Water Jac: A D move, W jump — swims through water, dies in lava
@@ -54,10 +78,11 @@ auto-cycling ferries, pushable crates (they float in any pool and can hold butto
 counterweight plates (weight on A sinks A and lifts B), paired exit doors.
 Rank A = all gems + under par, B = one of the two, C = finished. Progress saved in localStorage.
 
-## Levels (all verified completable by a scripted bot running the real physics)
+## Levels
 1 First Steps · 2 Crate Expectations · 3 Goo Gully · 4 The Shaft · 5 Counterweight
 6 Bridge of Goo · 7 Twin Towers · 8 River Crossing · 9 Crate Tower · 10 Curtain Call
-11 Crate Ferry · 12 Gatekeepers · 13 Split Shaft · 14 The Final Chamber
+11 Crate Ferry · 12 Gatekeepers · 13 Split Shaft · 14 Tidal Pools · 15 Lava Falls
+16 Ferry Relay · 17 Crate Lift · 18 Double Cross · 19 The Final Chamber
 
 Curtains: a vertical column of lava/water tiles (a tile with the same liquid above it) renders as a
 falling curtain — only the matching hero can walk through it.

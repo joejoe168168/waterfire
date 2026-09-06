@@ -139,7 +139,7 @@ kbd{display:inline-block;min-width:22px;padding:3px 7px;border-radius:6px;backgr
         <div class="col"><h3 class="w">💧 Water Jac</h3><p><kbd>A</kbd><kbd>D</kbd> move &nbsp; <kbd>W</kbd> jump</p><p>Swims through water. Lava is deadly.</p></div>
       </div>
       <p class="tip">Green goo kills both. Collect your colour of gems, push levers by walking into them, stand on buttons, and get <b>both</b> heroes to their doors.<br>
-      Solo? Press <kbd>Shift</kbd> to swap heroes — either key set moves the active one. <kbd>R</kbd> restart · <kbd>Esc</kbd> map · <kbd>M</kbd> mute</p>
+      Solo? Press <kbd>Shift</kbd> to swap heroes — either key set moves the active one. <kbd>R</kbd> restart · <kbd>Esc</kbd> pause · <kbd>H</kbd> hints · <kbd>M</kbd> mute</p>
       <div class="row" style="margin-top:14px">
         <button class="btn" id="btnPlay">▶ Play Co-op</button>
         <button class="btn ghost" id="btnSolo">Play Solo</button>
@@ -757,6 +757,148 @@ const LEVELS = [
     { t: 'plat', id: 'GD', x: 23, y: 3, w: 1, h: 2, to: { x: 23, y: 1 } }
   ] },
 
+{ name: 'Tidal Pools', par: 45, hint: 'Deep pools: Water Jac walks along the bottom of water, Fire Jay along the bottom of lava. Bridges for the other.',
+  map: [
+'################################',
+'#..............................#',
+'#..............................#',
+'#..............................#',
+'#..............................#',
+'#..............................#',
+'#..............................#',
+'#..............................#',
+'#..............................#',
+'#..............................#',
+'#..............................#',
+'#..............................#',
+'#......r..........b............#',
+'#..............................#',
+'#..............................#',
+'#....#~~~~~.....#LLLLL.........#',
+'#....#~~~~~.....#LLLLL.........#',
+'#...##~~~~~.b..##LLLLL.r.......#',
+'#FW.##~~~~~....##LLLLL....f.w..#',
+'################################'],
+  ents: [
+    { t: 'plat', id: 'PB', x: 7, y: 14, w: 2, to: { x: 9, y: 14 }, speed: 90 },
+    { t: 'lever', x: 12, y: 18, id: 'PB' },
+    { t: 'plat', id: 'PC', x: 18, y: 14, w: 2, to: { x: 21, y: 14 }, speed: 90 },
+    { t: 'lever', x: 24, y: 18, id: 'PC' }
+  ] },
+
+{ name: 'Lava Falls', par: 50, hint: 'Each hero can pass one curtain. Your crate unlocks the other hero\'s way onto the ledge.',
+  map: [
+'################################',
+'#.......#...........#..........#',
+'#.......#...........#..........#',
+'#.......#...........#..........#',
+'#.......#...........#..........#',
+'#.......#...........#..........#',
+'#.......#...........#..........#',
+'#.......#...........#..........#',
+'#.......#...........#..........#',
+'#.......#...........#..........#',
+'#.......#...........#..........#',
+'#.......#......................#',
+'#.......#......f.w.............#',
+'#.......#.....#######..........#',
+'#.......#.....#######..........#',
+'#.......L....#......~#.........#',
+'#...r...L....#......~#.....b...#',
+'#.......L...##......~##........#',
+'#.......L.F.##......~##.W......#',
+'################################'],
+  ents: [
+    { t: 'box', x: 5, y: 18 }, { t: 'button', x: 2, y: 18, id: 'GA' },
+    { t: 'box', x: 26, y: 18 }, { t: 'button', x: 29, y: 18, id: 'GB' },
+    { t: 'plat', id: 'GA', x: 19, y: 9, w: 1, h: 4, to: { x: 19, y: 5 } },
+    { t: 'plat', id: 'GB', x: 14, y: 9, w: 1, h: 4, to: { x: 14, y: 5 } }
+  ] },
+
+{ name: 'Ferry Relay', par: 45, hint: 'Two ferries meet for a moment. Hop across together — the second one is a step higher.',
+  map: [
+'################################',
+'#..............................#',
+'#..............................#',
+'#..............................#',
+'#..............................#',
+'#..............................#',
+'#..............................#',
+'#..............................#',
+'#..............................#',
+'#..............................#',
+'#..............................#',
+'#..............................#',
+'#..............................#',
+'#.......b.......r..............#',
+'#.....................rL.~.f.w.#',
+'#....................###########',
+'#FW..................###########',
+'#####................###########',
+'#####GGGGGGGGGGGGGGGG###########',
+'################################'],
+  ents: [
+    { t: 'plat', auto: true, x: 5, y: 17, w: 2, to: { x: 11, y: 17 }, speed: 90, pause: 1.0 },
+    { t: 'plat', auto: true, x: 19, y: 15, w: 2, to: { x: 13, y: 15 }, speed: 90, pause: 1.0 }
+  ] },
+
+{ name: 'Crate Lift', par: 50, hint: 'Ride up beside the crate, then shove it onto the button. Your partner pulls the lever back the other way.',
+  map: [
+'################################',
+'#..............................#',
+'#..............................#',
+'#..............................#',
+'#..............................#',
+'#..............................#',
+'#..............................#',
+'#..............................#',
+'#..............................#',
+'#..............................#',
+'#..............................#',
+'#..............................#',
+'#..........######....f..r.w..b.#',
+'#..................#############',
+'#..................#############',
+'#.........r.......##############',
+'#................b##############',
+'#................###############',
+'#.F.W............###############',
+'################################'],
+  ents: [
+    { t: 'plat', id: 'E', x: 9, y: 18, w: 2, to: { x: 9, y: 12 } },
+    { t: 'box', x: 10, y: 17 },
+    { t: 'lever', x: 6, y: 18, id: 'E', flip: true },
+    { t: 'button', x: 14, y: 11, id: 'G' },
+    { t: 'plat', id: 'G', x: 18, y: 11, w: 1, h: 4, to: { x: 18, y: 7 } }
+  ] },
+
+{ name: 'Double Cross', par: 55, hint: 'One hero is the other\'s counterweight. A crate dropped from above makes a heavier one.',
+  map: [
+'################################',
+'#..............................#',
+'#..............................#',
+'#..............................#',
+'#..............................#',
+'#..............................#',
+'#..............................#',
+'#..............................#',
+'#..............................#',
+'#..............................#',
+'#..............................#',
+'#...........r..................#',
+'#..............................#',
+'#.................L..~.f..w.b..#',
+'#.....#####..###################',
+'#....b...........###############',
+'#.r..............###############',
+'#FW..............###############',
+'###########..###################',
+'################################'],
+  ents: [
+    { t: 'pulley', a: { x: 11, y: 17, w: 2 }, b: { x: 4, y: 17, w: 2 }, dy: 2 },
+    { t: 'box', x: 9, y: 13 }
+  ] },
+
 { name: 'The Final Chamber', par: 70, hint: 'Everything you have learned. Jump over the plate — a crate makes a fine counterweight.',
   map: [
 '################################',
@@ -803,19 +945,24 @@ const Input = {
   down: {}, pressed: {},
   init() {
     addEventListener('keydown', e => {
+      if (e.target instanceof Element && e.target.closest('button,input,select,textarea') && ['Enter','Space'].includes(e.code)) return;
       if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Space', 'Tab'].includes(e.code)) e.preventDefault();
-      if (!this.down[e.code]) this.pressed[e.code] = true;
+      if (e.repeat) return;
+      const fresh = !this.down[e.code];
+      if (fresh) this.pressed[e.code] = true;
       this.down[e.code] = true;
-      Game.onKey(e.code);
+      if (fresh) Game.onKey(e.code);
     });
     addEventListener('keyup', e => { this.down[e.code] = false; });
-    addEventListener('blur', () => { this.down = {}; });
+    const suspend = () => { this.down = {}; this.pressed = {}; if (Game.state === 'play' && !Game.paused) Game.togglePause(); };
+    addEventListener('blur', suspend);
+    document.addEventListener('visibilitychange', () => { if (document.hidden) suspend(); });
     // touch pads
     document.querySelectorAll('.touch .tb').forEach(b => {
       const k = b.dataset.k;
-      const on = e => { e.preventDefault(); if (!this.down[k]) this.pressed[k] = true; this.down[k] = true; Game.onKey(k); };
+      const on = e => { e.preventDefault(); b.setPointerCapture(e.pointerId); if (!this.down[k]) { this.pressed[k] = true; this.down[k] = true; Game.onKey(k); } };
       const off = e => { e.preventDefault(); this.down[k] = false; };
-      b.addEventListener('pointerdown', on); b.addEventListener('pointerup', off); b.addEventListener('pointercancel', off); b.addEventListener('pointerleave', off);
+      b.addEventListener('pointerdown', on); b.addEventListener('pointerup', off); b.addEventListener('pointercancel', off); b.addEventListener('lostpointercapture', off);
     });
   },
   flush() { this.pressed = {}; }
@@ -915,9 +1062,19 @@ class Level {
     for (const p of this.plats) p.update(this, dt);
     // 3. boxes: gravity
     for (const b of this.boxes) {
+      const previousBottom = b.y + b.h;
       b.vy = Math.min(MAX_FALL, b.vy + GRAV * dt);
       const hit = this.moveY(b, b.vy * dt);
       if (hit) { b.vy = 0; b.on = hit === 'tile' ? null : hit; } else b.on = null;
+      // A crate floats just below the exposed liquid surface, and carries riders.
+      for (const l of this.liquids) {
+        if (this.liquidAt(l.x,l.y-1) === l.kind) continue;
+        const surface=l.y*T+T*.55+5;
+        if (b.x+b.w<=l.x*T || b.x>=(l.x+1)*T || previousBottom>surface+1 || b.y+b.h<surface) continue;
+        b.y=surface-b.h;b.vy=0;break;
+      }
+      const dy=b.y+b.h-previousBottom;
+      for(const p of this.players) if(Math.abs(p.y+p.h-(previousBottom-b.h))<1.5 && p.x<b.x+b.w && p.x+p.w>b.x) this.moveY(p,dy);
     }
     // 4. players
     for (const p of this.players) p.update(this, dt);
@@ -987,7 +1144,7 @@ class Level {
   win() {
     this.done = true; Audio.win();
     for (const d of this.doors) this.burst(d.x + d.w / 2, d.y + d.h / 2, d.kind === 'fire' ? '#ffd166' : '#9fe6ff', 30, 200, true);
-    setTimeout(() => Game.levelComplete(this), 900);
+    setTimeout(() => { if (Game.level === this && this.done) Game.levelComplete(this); }, 900);
   }
   gemCount(kind) { let g = 0, t = 0; for (const x of this.gems) if (x.kind === kind) { t++; if (x.got) g++; } return [g, t]; }
   /* particles */
@@ -1159,7 +1316,7 @@ const Render = {
       const painted = paintedForest.complete && paintedForest.naturalWidth;
       if (painted) {
         g.drawImage(paintedForest, 0, 0, W, H);
-        g.fillStyle = 'rgba(3,17,24,.24)'; g.fillRect(0, 0, W, H);
+        g.fillStyle = level.index<7?'rgba(3,17,24,.24)':level.index<14?'rgba(8,32,75,.34)':'rgba(63,27,9,.32)'; g.fillRect(0, 0, W, H);
       }
       // god rays
       g.save(); g.globalCompositeOperation = 'lighter';
@@ -1444,9 +1601,8 @@ const UI = {
     const map = $('map'); map.innerHTML = '';
     const n = LEVELS.length;
     // winding path across the temple
-    // serpentine: two rows, left-to-right then right-to-left
-    const perRow = Math.ceil(n / 2);
-    const pts = LEVELS.map((L, i) => { const row = Math.floor(i / perRow), k = i % perRow; const col = row % 2 ? perRow - 1 - k : k; return { x: 90 + col * (820 / (perRow - 1)), y: 150 + row * 230 + (k % 2 ? 26 : -26) }; });
+    const rows=n>14?3:2, perRow=Math.ceil(n/rows);
+    const pts=LEVELS.map((L,i)=>{const row=Math.floor(i/perRow),k=i%perRow,col=row%2?perRow-1-k:k;return{x:90+col*(820/(perRow-1)),y:rows===3?76+row*160:124+row*230};});
     let path = `<path d="M${pts.map(p => p.x + ' ' + p.y).join(' L')}" fill="none" stroke="#3e5b4e" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>`;
     path += `<path d="M${pts.map(p => p.x + ' ' + p.y).join(' L')}" fill="none" stroke="#89a894" stroke-width="3" stroke-dasharray="10 12" stroke-linecap="round"/>`;
     let deco = '';
@@ -1454,7 +1610,7 @@ const UI = {
     map.innerHTML = `<svg viewBox="0 0 1000 520" preserveAspectRatio="none"><rect width="1000" height="520" fill="url(#mg)" opacity=".25"/><defs>${rgrad('mg', [[0, '#17382f'], [1, '#0a1b17']], .5, .4, .7)}</defs>${deco}${path}</svg>`;
     pts.forEach((p, i) => {
       const unlocked = i < Save.data.unlocked, rank = Save.data.ranks[i];
-      const d = document.createElement('div'); d.className = 'node' + (unlocked ? '' : ' locked'); d.style.left = p.x / 10 + '%'; d.style.top = p.y / 5.2 + '%';
+      const d = document.createElement('button'); d.type='button'; d.disabled=!unlocked; d.setAttribute('aria-label',`Level ${i+1}: ${LEVELS[i].name}${unlocked?'':' (locked)'}`); d.className = 'node' + (unlocked ? '' : ' locked'); d.style.left = p.x / 10 + '%'; d.style.top = p.y / 5.2 + '%';
       d.innerHTML = `${unlocked ? i + 1 : '🔒'}${rank ? `<span class="rank ${rank}">${rank}</span>` : ''}<span class="name">${LEVELS[i].name}</span>`;
       if (unlocked) d.onclick = () => { Audio.click(); Game.startLevel(i); };
       map.appendChild(d);
@@ -1501,6 +1657,7 @@ const Game = {
   toMap() { this.state = 'map'; this.paused = false; $('hud').style.display = 'none'; UI.buildMap(); UI.show('ovMap'); },
   startLevel(i, isRestart = false, deaths = 0) {
     Audio.init(); Audio.resume();
+    this.acc=0; Input.down={}; Input.flush();
     this.current = i; this.level = new Level(LEVELS[i], i); this.level.deaths = deaths; this.state = 'play'; this.paused = false; this.active = 'fire';
     UI.hideAll(); $('hud').style.display = 'flex'; $('lvlName').textContent = (i + 1) + '. ' + LEVELS[i].name; $('pauseMode').textContent = this.solo ? 'Solo mode — Shift swaps heroes' : 'Co-op mode';
     if (!isRestart) UI.toast(LEVELS[i].hint, 3200);
@@ -1523,7 +1680,7 @@ const Game = {
     $('btnWinNext').style.display = this.current + 1 < LEVELS.length ? '' : 'none';
     UI.show('ovWin');
   },
-  togglePause() { if (this.state !== 'play') return; this.paused = !this.paused; if (this.paused) UI.show('ovPause'); else UI.hideAll(); },
+  togglePause() { if (this.state !== 'play') return; this.paused = !this.paused; this.acc=0; Input.down={}; Input.flush(); if (this.paused) UI.show('ovPause'); else UI.hideAll(); },
   toggleMute() { Audio.init(); Audio.setMuted(!Audio.muted); $('btnMute').textContent = Audio.muted ? '🔇' : '🔊'; },
   onKey(code) {
     if (code === 'KeyM') this.toggleMute();
@@ -1544,8 +1701,7 @@ const Game = {
     const dt = Math.min(0.1, (now - this.last) / 1000); this.last = now;
     if (this.level && (this.state === 'play' || this.state === 'win') && !this.paused) {
       this.acc += dt; const step = 1 / 120; let n = 0;
-      while (this.acc >= step && n < 8) { this.level.update(step); this.acc -= step; n++; }
-      Input.flush();
+      while (this.acc >= step && n < 12) { this.level.update(step); Input.flush(); this.acc -= step; n++; }
       Render.frame(this.level, dt);
       if (this.state === 'play') UI.hud(this.level);
     } else if (this.level && this.paused) {
@@ -1564,5 +1720,6 @@ window.addEventListener('load', () => Game.init());
 
 </script>
 <script src="forest-polish.js"></script>
+<script src="player-experience.js"></script>
 </body>
 </html>
