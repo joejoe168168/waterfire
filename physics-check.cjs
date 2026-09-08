@@ -23,7 +23,7 @@ assert.equal(fs.readFileSync(path.join(__dirname,'index.html'),'utf8'),fs.readFi
   };
   const tick=(l,n)=>{for(let i=0;i<n;i++){l.update(step);Input.flush()}};
   const inWall=(l,p)=>{for(let y=Math.floor((p.y+.1)/T);y<=Math.floor((p.y+p.h-.1)/T);y++)for(let x=Math.floor((p.x+.1)/T);x<=Math.floor((p.x+p.w-.1)/T);x++)if(l.solid(x,y))return true;return false};
-  check(LEVELS.length===19,'19 levels imported');
+  check(LEVELS.length===29,'29 levels imported');
   for(let i=0;i<LEVELS.length;i++){
    const d=LEVELS[i];check(d.map.length===20&&d.map.every(r=>r.length===32),`Level ${i+1}: map dimensions`);
    Game.startLevel(i);const l=Game.level;
@@ -81,6 +81,10 @@ assert.equal(fs.readFileSync(path.join(__dirname,'index.html'),'utf8'),fs.readFi
  assert.deepEqual(await page.evaluate(()=>({rank:Save.data.ranks[18],time:Save.data.times[18],medals:Save.data.medals[18],misassigned:Save.data.ranks[13]||null})),{rank:'A',time:32,medals:[true,true,true],misassigned:null});
  await page.evaluate(()=>{Save.data.ranks[13]='B';Save.save()});await page.reload();
  assert.equal(await page.evaluate(()=>Save.data.ranks[13]),'B');results.push('Old finale awards migrate once; new level awards survive reload');
+ assert.equal(await page.evaluate(()=>Save.data.unlocked),20,'Completed old finale unlocks bonus chambers');
+ await page.evaluate(()=>localStorage.setItem(Save.key,JSON.stringify({campaignVersion:19,ranks:{18:'B'},times:{18:70},medals:{18:[true,false,true]},unlocked:19,muted:true})));
+ await page.reload();assert.deepEqual(await page.evaluate(()=>({unlocked:Save.data.unlocked,rank:Save.data.ranks[18],time:Save.data.times[18],medals:Save.data.medals[18]})),{unlocked:20,rank:'B',time:70,medals:[true,false,true]});
+ results.push('Finished 19-level campaigns unlock level 20 without losing awards');
  assert.deepEqual(errors,[]);console.log(results.join('\n'));console.log(`PASS ${results.length} checks`);
  }finally{await browser.close()}
 })().catch(e=>{console.error(e);process.exitCode=1});

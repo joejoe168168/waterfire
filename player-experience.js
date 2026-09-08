@@ -11,6 +11,14 @@ if(Save.data.campaignVersion!==19){
 }
 const resetCampaign=Save.reset;
 Save.reset=function(){resetCampaign.call(this);this.data.campaignVersion=19;this.save()};
+// A previously completed finale unlocks the next chamber when the campaign grows.
+const previouslyUnlocked=Save.data.unlocked||1;
+for(const [index,rank] of Object.entries(Save.data.ranks||{})){
+  const i=Number(index);
+  if(Number.isInteger(i)&&i>=0&&i<LEVELS.length&&['A','B','C'].includes(rank))
+    Save.data.unlocked=Math.max(Save.data.unlocked||1,Math.min(LEVELS.length,i+2));
+}
+if(Save.data.unlocked!==previouslyUnlocked)Save.save();
 
 // Stop a mover if it would pin a rider inside a wall or another platform.
 const carryPlatform=Platform.prototype.carry;
@@ -49,6 +57,9 @@ experienceStyle.textContent=`
 #stage{flex-shrink:0}
 .node{font-family:var(--font)}.node .name{font-size:11px;top:67px;max-width:126px;white-space:normal;line-height:1.25}
 .node .medals{top:99px}.node:disabled{opacity:.65}
+.map.expanded .node{width:52px;height:52px;margin:-26px 0 0 -26px;font-size:18px}
+.map.expanded .node .name{top:54px;width:108px;font-size:10px;line-height:1.2}
+.map.expanded .node .medals{top:82px;font-size:9px}
 #touch{position:fixed;bottom:max(10px,env(safe-area-inset-bottom));left:0;right:0;z-index:5;height:90px}
 #touch .tb{width:50px;height:50px;font-size:20px;background:#0b293be8;box-shadow:0 3px 15px #0006}
 #touch .pad{bottom:0;gap:6px}#touch .pad.l{left:10px}#touch .pad.r{right:10px}

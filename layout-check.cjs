@@ -8,13 +8,13 @@ const assert=require('node:assert/strict');
  const url=pathToFileURL(path.join(__dirname,'ember-tide.html')).href;
  const page=await browser.newPage({viewport:{width:1152,height:760}});
  await page.goto(url);await page.waitForFunction(()=>Art.pending===0&&paintedForest.complete);
- await page.evaluate(()=>{Save.data.unlocked=19;Game.toMap()});
+ await page.evaluate(()=>{Save.data.unlocked=LEVELS.length;Game.toMap()});
  await page.waitForFunction(()=>getComputedStyle(document.getElementById('ovMap')).opacity==='1');
  await page.screenshot({path:path.join(__dirname,'qa/map-desktop.png')});
- assert.equal(await page.locator('.node').count(),19);
+ assert.equal(await page.locator('.node').count(),29);
  await page.locator('.node').last().focus();await page.keyboard.press('Enter');
- assert.equal(await page.evaluate(()=>Game.current),18);
- for(let i=13;i<19;i++){
+ assert.equal(await page.evaluate(()=>Game.current),28);
+ for(let i=19;i<29;i++){
   await page.evaluate(i=>{Game.startLevel(i);UI.toast('',0)},i);
   await page.waitForFunction(()=>getComputedStyle(document.getElementById('ovMap')).opacity==='0');
   await page.screenshot({path:path.join(__dirname,`qa/level-${i+1}.png`)});
@@ -39,6 +39,6 @@ const assert=require('node:assert/strict');
  assert(await mp.evaluate(()=>!Input.down.ArrowRight&&!Input.down.ArrowUp));
  await mp.screenshot({path:path.join(__dirname,'qa/play-phone.png')});
  await mp.evaluate(()=>Game.togglePause());assert(!(await mp.locator('#touch').isVisible()));
- console.log('PASS: 19-level map, keyboard map selection, six new/finale screenshots, phone menu, full-size controls, simultaneous touch move+jump, release outside button, hidden pads while paused.');
+ console.log('PASS: 29-level map, keyboard map selection, ten bonus screenshots, phone menu, full-size controls, simultaneous touch move+jump, release outside button, hidden pads while paused.');
  }finally{await browser.close()}
 })().catch(e=>{console.error(e);process.exitCode=1});
