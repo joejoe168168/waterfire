@@ -8,13 +8,21 @@ const assert=require('node:assert/strict');
  const url=pathToFileURL(path.join(__dirname,'ember-tide.html')).href;
  const page=await browser.newPage({viewport:{width:1152,height:760}});
  await page.goto(url);await page.waitForFunction(()=>Art.pending===0&&paintedForest.complete);
- await page.evaluate(()=>{Save.data.unlocked=LEVELS.length;Game.toMap()});
+ await page.evaluate(()=>{Save.data.unlocked=LEVELS.length;Save.data.ranks=Object.fromEntries(LEVELS.map((_,i)=>[i,'A']));Save.data.medals=Object.fromEntries(LEVELS.map((_,i)=>[i,[true,true,true]]));Game.toMap()});
  await page.waitForFunction(()=>getComputedStyle(document.getElementById('ovMap')).opacity==='1');
  await page.screenshot({path:path.join(__dirname,'qa/map-desktop.png')});
- assert.equal(await page.locator('.node').count(),29);
+ assert.equal(await page.locator('.node').count(),39);
+ const overlapping=await page.evaluate(()=>{
+  const nodes=[...document.querySelectorAll('.node')],bounds=nodes.map(n=>[n,...n.children].map(el=>el.getBoundingClientRect()));
+  const hits=[];
+  for(let i=0;i<bounds.length;i++)for(let j=i+1;j<bounds.length;j++)
+   if(bounds[i].some(a=>bounds[j].some(b=>a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top)))hits.push([i+1,j+1]);
+  return hits;
+ });
+ assert.deepEqual(overlapping,[],'Map nodes, names and medals must not overlap adjacent chambers');
  await page.locator('.node').last().focus();await page.keyboard.press('Enter');
- assert.equal(await page.evaluate(()=>Game.current),28);
- for(let i=19;i<29;i++){
+ assert.equal(await page.evaluate(()=>Game.current),38);
+ for(let i=29;i<39;i++){
   await page.evaluate(i=>{Game.startLevel(i);UI.toast('',0)},i);
   await page.waitForFunction(()=>getComputedStyle(document.getElementById('ovMap')).opacity==='0');
   await page.screenshot({path:path.join(__dirname,`qa/level-${i+1}.png`)});
@@ -24,6 +32,10 @@ const assert=require('node:assert/strict');
  await mp.screenshot({path:path.join(__dirname,'qa/title-phone.png')});
  const playBox=await mp.locator('#btnSolo').boundingBox();assert(playBox.width>80&&playBox.height>=36&&playBox.y>=0&&playBox.y+playBox.height<844);
  await mp.click('#btnSolo');await mp.waitForFunction(()=>getComputedStyle(document.getElementById('ovMap')).opacity==='1');
+ assert.equal(await mp.locator('.node').count(),39);
+ await mp.locator('.node').last().scrollIntoViewIfNeeded();
+ const last=await mp.locator('.node').last().boundingBox();assert(last.x>=0&&last.x+last.width<=390&&last.y>=0&&last.y+last.height<=844,'Final chamber is reachable by scrolling on phones');
+ await mp.locator('.node').first().scrollIntoViewIfNeeded();
  await mp.screenshot({path:path.join(__dirname,'qa/map-phone.png')});
  await mp.locator('.node').first().click();await mp.setViewportSize({width:844,height:390});
  await mp.waitForFunction(()=>document.getElementById('touch').classList.contains('playing'));
@@ -39,6 +51,6 @@ const assert=require('node:assert/strict');
  assert(await mp.evaluate(()=>!Input.down.ArrowRight&&!Input.down.ArrowUp));
  await mp.screenshot({path:path.join(__dirname,'qa/play-phone.png')});
  await mp.evaluate(()=>Game.togglePause());assert(!(await mp.locator('#touch').isVisible()));
- console.log('PASS: 29-level map, keyboard map selection, ten bonus screenshots, phone menu, full-size controls, simultaneous touch move+jump, release outside button, hidden pads while paused.');
+ console.log('PASS: 39-level map without overlapping names or medals, keyboard map selection, ten new screenshots, scrollable phone map, full-size controls, simultaneous touch move+jump, release outside button, hidden pads while paused.');
  }finally{await browser.close()}
 })().catch(e=>{console.error(e);process.exitCode=1});

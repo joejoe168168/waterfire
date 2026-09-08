@@ -23,7 +23,7 @@ assert.equal(fs.readFileSync(path.join(__dirname,'index.html'),'utf8'),fs.readFi
   };
   const tick=(l,n)=>{for(let i=0;i<n;i++){l.update(step);Input.flush()}};
   const inWall=(l,p)=>{for(let y=Math.floor((p.y+.1)/T);y<=Math.floor((p.y+p.h-.1)/T);y++)for(let x=Math.floor((p.x+.1)/T);x<=Math.floor((p.x+p.w-.1)/T);x++)if(l.solid(x,y))return true;return false};
-  check(LEVELS.length===29,'29 levels imported');
+  check(LEVELS.length===39,'39 levels imported');
   for(let i=0;i<LEVELS.length;i++){
    const d=LEVELS[i];check(d.map.length===20&&d.map.every(r=>r.length===32),`Level ${i+1}: map dimensions`);
    Game.startLevel(i);const l=Game.level;
@@ -65,6 +65,14 @@ assert.equal(fs.readFileSync(path.join(__dirname,'index.html'),'utf8'),fs.readFi
   check(!inWall(l,p)&&l.plats[0].y>=14*T+p.h-.1,'Lift stops below a ceiling without clipping rider');
   l=fixture([],[{t:'plat',x:8,y:16,w:2,to:{x:14,y:16},auto:true}]);p=l.fire;p.x=8*T+4;p.y=16*T-p.h;const oldX=p.x;
   l.plats[0].carry(l,10,0);check(Math.abs(p.x-oldX-10)<.001,'Horizontal ferry carries rider');
+  for(const dx of [-1,1])for(const dy of [-1,1]){
+   l=fixture([],[{t:'plat',x:10,y:16,w:4,to:{x:14,y:12},auto:true},{t:'box',x:12,y:15}]);
+   p=l.fire;p.x=10*T+10;p.y=16*T-p.h;const slab=l.plats[0],box=l.boxes[0];
+   const px=p.x,py=p.y,bx=box.x,by=box.y;
+   for(let i=0;i<60;i++)slab.carry(l,dx,dy);
+   check(Math.abs(p.x-px-60*dx)<.001&&Math.abs(p.y-py-60*dy)<.001&&l.restingOn(p,slab),`Diagonal ferry carries hero (${dx},${dy})`);
+   check(Math.abs(box.x-bx-60*dx)<.001&&Math.abs(box.y-by-60*dy)<.001&&l.restingOn(box,slab),`Diagonal ferry carries crate (${dx},${dy})`);
+  }
   l=fixture([],[{t:'box',x:7,y:18},{t:'box',x:8,y:18}]);tick(l,5);p=l.fire;p.x=l.boxes[0].x-p.w;
   l.moveX(p,6,true);check(!overlap(p,l.boxes[0])&&!overlap(l.boxes[0],l.boxes[1]),'Crate chains push without overlap');
   Game.solo=true;Game.active='fire';Input.down={};
@@ -85,6 +93,9 @@ assert.equal(fs.readFileSync(path.join(__dirname,'index.html'),'utf8'),fs.readFi
  await page.evaluate(()=>localStorage.setItem(Save.key,JSON.stringify({campaignVersion:19,ranks:{18:'B'},times:{18:70},medals:{18:[true,false,true]},unlocked:19,muted:true})));
  await page.reload();assert.deepEqual(await page.evaluate(()=>({unlocked:Save.data.unlocked,rank:Save.data.ranks[18],time:Save.data.times[18],medals:Save.data.medals[18]})),{unlocked:20,rank:'B',time:70,medals:[true,false,true]});
  results.push('Finished 19-level campaigns unlock level 20 without losing awards');
+ await page.evaluate(()=>localStorage.setItem(Save.key,JSON.stringify({campaignVersion:19,ranks:{28:'A'},times:{28:52},medals:{28:[true,true,true]},unlocked:29,muted:true})));
+ await page.reload();assert.deepEqual(await page.evaluate(()=>({unlocked:Save.data.unlocked,rank:Save.data.ranks[28],time:Save.data.times[28],medals:Save.data.medals[28]})),{unlocked:30,rank:'A',time:52,medals:[true,true,true]});
+ results.push('Finished 29-level campaigns unlock level 30 without losing awards');
  assert.deepEqual(errors,[]);console.log(results.join('\n'));console.log(`PASS ${results.length} checks`);
  }finally{await browser.close()}
 })().catch(e=>{console.error(e);process.exitCode=1});

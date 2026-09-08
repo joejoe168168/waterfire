@@ -1,6 +1,6 @@
 # waterfire — Water Jac and Fire Jay
 
-A cooperative elemental puzzle platformer with 29 forest-temple levels.
+A cooperative elemental puzzle platformer with 39 forest-temple levels.
 Open `index.html` in any modern browser or publish this folder as a GitHub Pages site.
 `ember-tide.html` is the source filename; run `node sync-entry.cjs` after editing it to update the identical GitHub entry point, `index.html`.
 Keep `forest-polish.js`, `player-experience.js`, and the `assets` folder with the HTML files.
@@ -38,7 +38,8 @@ Short taps make smaller jumps; a brief coyote window makes ledge jumps forgiving
 Holding pause/swap keys triggers once. Losing focus automatically pauses and clears input.
 Touch controls retain finger-sized targets and pointer capture; phone menus use a readable
 portrait layout. Crates float in all pools. Moving platforms stop when a rider would be pinned
-inside a wall. The map uses four rows on desktop and a scrollable grid on phones.
+inside a wall. Diagonal ferries carry both heroes and crates without pushing their own riders off.
+The map uses five rows on desktop and a scrollable grid on phones.
 Existing finale awards migrate from level 14 to level 19 once, preserving progress.
 
 With Playwright and Edge available, run:
@@ -51,9 +52,9 @@ node layout-check.cjs
 node qa-bonus-levels.cjs
 ```
 
-These cover all 29 map structures, safe idle spawns and rendering, focused movement and
+These cover all 39 map structures, safe idle spawns and rendering, focused movement and
 hazard scenarios, save migration, keyboard selection, and simultaneous touch move/jump.
-The bonus completion check plays levels 20–29 through the shipped browser physics,
+The bonus completion check plays levels 20–39 through the shipped browser physics,
 collecting all crystals and reaching both exits without deaths, under par time.
 
 ## Controls
@@ -90,6 +91,11 @@ Bonus chambers:
 20 Ashen Stairway · 21 Signal Exchange · 22 Reservoir Run · 23 Lantern Lift
 24 Island Hoppers · 25 Cargo Lock · 26 Elemental Divide · 27 Falling Gardens
 28 A Helping Hand · 29 Temple Afterglow
+
+Further chambers:
+30 Mirror Marsh · 31 Counterweight Vault · 32 Opposite Orders · 33 Sluice Workshop
+34 Pendulum Pier · 35 Sunken Switches · 36 Broken Crown · 37 Crate Escalator
+38 High Road, Low Road · 39 Confluence
 
 Completing the previous finale automatically unlocks the next new chamber. Existing
 level numbers, ranks, medals and best times are preserved.

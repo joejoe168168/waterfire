@@ -60,6 +60,7 @@ experienceStyle.textContent=`
 .map.expanded .node{width:52px;height:52px;margin:-26px 0 0 -26px;font-size:18px}
 .map.expanded .node .name{top:54px;width:108px;font-size:10px;line-height:1.2}
 .map.expanded .node .medals{top:82px;font-size:9px}
+.map.expanded .node .rank{top:0;right:-6px;width:22px;height:22px;font-size:11px}
 #touch{position:fixed;bottom:max(10px,env(safe-area-inset-bottom));left:0;right:0;z-index:5;height:90px}
 #touch .tb{width:50px;height:50px;font-size:20px;background:#0b293be8;box-shadow:0 3px 15px #0006}
 #touch .pad{bottom:0;gap:6px}#touch .pad.l{left:10px}#touch .pad.r{right:10px}
