@@ -1,8 +1,9 @@
 const {chromium}=require('playwright');
 const path=require('node:path');const {pathToFileURL}=require('node:url');const fs=require('node:fs');
 const assert=require('node:assert/strict');
+const launchOptions=process.env.PW_CHROMIUM?{headless:true,executablePath:process.env.PW_CHROMIUM,args:['--no-sandbox']}:{channel:'msedge',headless:true};
 (async()=>{
- const browser=await chromium.launch({channel:'msedge',headless:true});
+ const browser=await chromium.launch(launchOptions);
  try{
  fs.mkdirSync(path.join(__dirname,'qa'),{recursive:true});
  const url=pathToFileURL(path.join(__dirname,'ember-tide.html')).href;
@@ -11,7 +12,7 @@ const assert=require('node:assert/strict');
  await page.evaluate(()=>{Save.data.unlocked=LEVELS.length;Save.data.ranks=Object.fromEntries(LEVELS.map((_,i)=>[i,'A']));Save.data.medals=Object.fromEntries(LEVELS.map((_,i)=>[i,[true,true,true]]));Game.toMap()});
  await page.waitForFunction(()=>getComputedStyle(document.getElementById('ovMap')).opacity==='1');
  await page.screenshot({path:path.join(__dirname,'qa/map-desktop.png')});
- assert.equal(await page.locator('.node').count(),39);
+ assert.equal(await page.locator('.node').count(),60);
  const overlapping=await page.evaluate(()=>{
   const nodes=[...document.querySelectorAll('.node')],bounds=nodes.map(n=>[n,...n.children].map(el=>el.getBoundingClientRect()));
   const hits=[];
@@ -21,8 +22,8 @@ const assert=require('node:assert/strict');
  });
  assert.deepEqual(overlapping,[],'Map nodes, names and medals must not overlap adjacent chambers');
  await page.locator('.node').last().focus();await page.keyboard.press('Enter');
- assert.equal(await page.evaluate(()=>Game.current),38);
- for(let i=29;i<39;i++){
+ assert.equal(await page.evaluate(()=>Game.current),59);
+ for(let i=39;i<60;i++){
   await page.evaluate(i=>{Game.startLevel(i);UI.toast('',0)},i);
   await page.waitForFunction(()=>getComputedStyle(document.getElementById('ovMap')).opacity==='0');
   await page.screenshot({path:path.join(__dirname,`qa/level-${i+1}.png`)});
@@ -32,7 +33,7 @@ const assert=require('node:assert/strict');
  await mp.screenshot({path:path.join(__dirname,'qa/title-phone.png')});
  const playBox=await mp.locator('#btnSolo').boundingBox();assert(playBox.width>80&&playBox.height>=36&&playBox.y>=0&&playBox.y+playBox.height<844);
  await mp.click('#btnSolo');await mp.waitForFunction(()=>getComputedStyle(document.getElementById('ovMap')).opacity==='1');
- assert.equal(await mp.locator('.node').count(),39);
+ assert.equal(await mp.locator('.node').count(),60);
  await mp.locator('.node').last().scrollIntoViewIfNeeded();
  const last=await mp.locator('.node').last().boundingBox();assert(last.x>=0&&last.x+last.width<=390&&last.y>=0&&last.y+last.height<=844,'Final chamber is reachable by scrolling on phones');
  await mp.locator('.node').first().scrollIntoViewIfNeeded();
@@ -51,6 +52,6 @@ const assert=require('node:assert/strict');
  assert(await mp.evaluate(()=>!Input.down.ArrowRight&&!Input.down.ArrowUp));
  await mp.screenshot({path:path.join(__dirname,'qa/play-phone.png')});
  await mp.evaluate(()=>Game.togglePause());assert(!(await mp.locator('#touch').isVisible()));
- console.log('PASS: 39-level map without overlapping names or medals, keyboard map selection, ten new screenshots, scrollable phone map, full-size controls, simultaneous touch move+jump, release outside button, hidden pads while paused.');
+ console.log('PASS: 60-level map without overlapping names or medals, keyboard map selection, screenshots of levels 40-60, scrollable phone map, full-size controls, simultaneous touch move+jump, release outside button, hidden pads while paused.');
  }finally{await browser.close()}
 })().catch(e=>{console.error(e);process.exitCode=1});

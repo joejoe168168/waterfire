@@ -10,7 +10,7 @@ if(Save.data.campaignVersion!==19){
   Save.data.campaignVersion=19;Save.save();
 }
 const resetCampaign=Save.reset;
-Save.reset=function(){resetCampaign.call(this);this.data.campaignVersion=19;this.save()};
+Save.reset=function(){resetCampaign.call(this);this.data.campaignVersion=19;this.data.bonusHardMode=true;this.save()};
 // A previously completed finale unlocks the next chamber when the campaign grows.
 const previouslyUnlocked=Save.data.unlocked||1;
 for(const [index,rank] of Object.entries(Save.data.ranks||{})){
@@ -19,6 +19,12 @@ for(const [index,rank] of Object.entries(Save.data.ranks||{})){
     Save.data.unlocked=Math.max(Save.data.unlocked||1,Math.min(LEVELS.length,i+2));
 }
 if(Save.data.unlocked!==previouslyUnlocked)Save.save();
+// Bonus chambers 20-39 were rebuilt as hard levels: old times, ranks and medals there no longer
+// describe the same rooms, so clear those records once. Unlocks are kept.
+if(!Save.data.bonusHardMode){
+  for(const field of ['ranks','times','medals']){const values=Save.data[field];if(values)for(let i=19;i<39;i++)delete values[i];}
+  Save.data.bonusHardMode=true;Save.save();
+}
 
 // Stop a mover if it would pin a rider inside a wall or another platform.
 const carryPlatform=Platform.prototype.carry;
@@ -31,7 +37,9 @@ Platform.prototype.carry=function(level,mx,my){
       for(let x=Math.floor((m.x+.1)/T);x<=Math.floor((m.x+m.w-.1)/T);x++)if(level.solid(x,y))return true;
     return false;
   };
-  const jam=movers.some(m=>overlapsTile(m)||level.plats.some(p=>overlap(m,p)));
+  // Only bodies this move touched count: something stuck elsewhere must not freeze every platform.
+  const moved=new Set(snapshot.filter(s=>s.m!==this&&(s.m.x!==s.x||s.m.y!==s.y)).map(s=>s.m));
+  const jam=movers.some(m=>(moved.has(m)||overlap(m,this))&&(overlapsTile(m)||level.plats.some(p=>overlap(m,p))));
   if(jam){for(const s of snapshot){s.m.x=s.x;s.m.y=s.y;}return false;}
   return true;
 };
@@ -61,6 +69,10 @@ experienceStyle.textContent=`
 .map.expanded .node .name{top:54px;width:108px;font-size:10px;line-height:1.2}
 .map.expanded .node .medals{top:82px;font-size:9px}
 .map.expanded .node .rank{top:0;right:-6px;width:22px;height:22px;font-size:11px}
+.map.dense .node{width:42px;height:42px;margin:-21px 0 0 -21px;font-size:15px}
+.map.dense .node .name{top:43px;width:86px;max-width:86px;font-size:9px;line-height:1.12}
+.map.dense .node .medals{top:64px;font-size:7.5px;letter-spacing:0}
+.map.dense .node .rank{width:16px;height:16px;font-size:9px;line-height:16px;top:-7px;right:-11px}
 #touch{position:fixed;bottom:max(10px,env(safe-area-inset-bottom));left:0;right:0;z-index:5;height:90px}
 #touch .tb{width:50px;height:50px;font-size:20px;background:#0b293be8;box-shadow:0 3px 15px #0006}
 #touch .pad{bottom:0;gap:6px}#touch .pad.l{left:10px}#touch .pad.r{right:10px}

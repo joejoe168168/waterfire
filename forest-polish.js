@@ -131,6 +131,14 @@ Render.player=function(level,p){
 const oldDoors=Render.doors;
 Render.doors=function(level){
   oldDoors.call(this,level);
+  if(level.gems.some(g=>g.kind==='white'&&!g.got)){
+    // sealed until the white crystal is taken
+    ctx.save();ctx.strokeStyle='rgba(240,246,255,.85)';ctx.fillStyle='rgba(20,30,50,.55)';ctx.lineWidth=2;
+    for(const d of level.doors){const x=d.x+d.w/2,y=d.y+d.h/2;
+      ctx.beginPath();ctx.arc(x,y-4,7,Math.PI,0);ctx.stroke();ctx.fillRect(x-9,y-4,18,14);ctx.strokeRect(x-9,y-4,18,14);
+      ctx.beginPath();ctx.moveTo(x,y-1);ctx.lineTo(x+5,y+3);ctx.lineTo(x,y+7);ctx.lineTo(x-5,y+3);ctx.closePath();ctx.stroke();}
+    ctx.restore();
+  }
   ctx.save();
   for(const d of level.doors){
     const all=level.gems.filter(g=>g.kind===d.kind).every(g=>g.got);
@@ -171,10 +179,10 @@ Render.background=function(level){
   if(!Game.showConnections||Game.state!=='play')return;
   ctx.save();ctx.lineWidth=2;ctx.setLineDash([4,7]);
   ctx.lineDashOffset=motionPreference.matches?0:-this.t*15;
-  for(const control of [...level.buttons,...level.levers]){
+  for(const control of [...level.buttons,...level.levers,...(level.timers||[]),...(level.sensors||[]),...(level.rings||[])]){
     const x=control.x+T/2,y=control.y+T/2;
     ctx.strokeStyle=level.trigger(control.id)?'#acf7bfaa':'#ffdd9488';
-    for(const platform of level.plats.filter(p=>p.id===control.id)){
+    for(const platform of [...level.plats,...(level.fans||[]),...(level.mirrors||[]),...(level.frosts||[]),...(level.emitters||[])].filter(p=>p.id===control.id)){
       const px=platform.x+platform.w/2,py=platform.y+platform.h/2;
       ctx.beginPath();ctx.moveTo(x,y);ctx.bezierCurveTo(x,y-50,px,py-50,px,py);ctx.stroke();
       ctx.beginPath();ctx.arc(px,py,8,0,Math.PI*2);ctx.stroke();

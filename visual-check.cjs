@@ -2,8 +2,9 @@ const { chromium } = require('playwright');
 const { pathToFileURL } = require('url');
 const path = require('path');
 const assert = require('assert');
+const launchOptions=process.env.PW_CHROMIUM?{headless:true,executablePath:process.env.PW_CHROMIUM,args:['--no-sandbox']}:{channel:'msedge',headless:true};
 (async () => {
-  const browser = await chromium.launch({channel:'msedge',headless:true});
+  const browser = await chromium.launch(launchOptions);
   const page = await browser.newPage({viewport:{width:1440,height:1000}});
   const errors=[]; page.on('pageerror', e=>errors.push(e.message));
   await page.goto(pathToFileURL(path.join(__dirname,'ember-tide.html')).href);
@@ -35,7 +36,7 @@ const assert = require('assert');
   });
   assert(collection.collected&&collection.feedback>0);
   const levelCount=await page.evaluate(()=>LEVELS.length);
-  assert.equal(levelCount,39);
+  assert.equal(levelCount,60);
   for(let i=0;i<levelCount;i++) await page.evaluate(i=>{Game.startLevel(i); Render.frame(Game.level,1/60)},i);
   const earned=await page.evaluate(()=>{
     Game.startLevel(0);const l=Game.level;l.gems.forEach(g=>g.got=true);l.time=10;l.deaths=0;l.done=true;UI.hud(l);
@@ -56,6 +57,6 @@ const assert = require('assert');
   assert(await page.locator('#btnPlay').isVisible());
   assert.deepEqual(errors,[]);
   await page.evaluate(()=>Save.reset());assert.deepEqual(await page.evaluate(()=>Save.data.medals),{});
-  console.log('PASS: assets, movement, swap, pause, hint toggle, crystal feedback, all 39 renders, medals earned/persisted/retained/reset, reduced motion, narrow viewport; no JS errors.');
+  console.log('PASS: assets, movement, swap, pause, hint toggle, crystal feedback, all 60 renders, medals earned/persisted/retained/reset, reduced motion, narrow viewport; no JS errors.');
   await browser.close();
 })().catch(e=>{console.error(e);process.exit(1)});

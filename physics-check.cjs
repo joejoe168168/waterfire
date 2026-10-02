@@ -3,9 +3,10 @@ const path=require('node:path');
 const {pathToFileURL}=require('node:url');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
+const launchOptions=process.env.PW_CHROMIUM?{headless:true,executablePath:process.env.PW_CHROMIUM,args:['--no-sandbox']}:{channel:'msedge',headless:true};
 assert.equal(fs.readFileSync(path.join(__dirname,'index.html'),'utf8'),fs.readFileSync(path.join(__dirname,'ember-tide.html'),'utf8'),'Run node sync-entry.cjs before testing');
 (async()=>{
- const browser=await chromium.launch({channel:'msedge',headless:true});
+ const browser=await chromium.launch(launchOptions);
  try{
  const page=await browser.newPage();const errors=[];
  page.on('pageerror',e=>errors.push(e.message));
@@ -23,7 +24,7 @@ assert.equal(fs.readFileSync(path.join(__dirname,'index.html'),'utf8'),fs.readFi
   };
   const tick=(l,n)=>{for(let i=0;i<n;i++){l.update(step);Input.flush()}};
   const inWall=(l,p)=>{for(let y=Math.floor((p.y+.1)/T);y<=Math.floor((p.y+p.h-.1)/T);y++)for(let x=Math.floor((p.x+.1)/T);x<=Math.floor((p.x+p.w-.1)/T);x++)if(l.solid(x,y))return true;return false};
-  check(LEVELS.length===39,'39 levels imported');
+  check(LEVELS.length===60,'60 levels imported');
   for(let i=0;i<LEVELS.length;i++){
    const d=LEVELS[i];check(d.map.length===20&&d.map.every(r=>r.length===32),`Level ${i+1}: map dimensions`);
    Game.startLevel(i);const l=Game.level;
@@ -94,8 +95,11 @@ assert.equal(fs.readFileSync(path.join(__dirname,'index.html'),'utf8'),fs.readFi
  await page.reload();assert.deepEqual(await page.evaluate(()=>({unlocked:Save.data.unlocked,rank:Save.data.ranks[18],time:Save.data.times[18],medals:Save.data.medals[18]})),{unlocked:20,rank:'B',time:70,medals:[true,false,true]});
  results.push('Finished 19-level campaigns unlock level 20 without losing awards');
  await page.evaluate(()=>localStorage.setItem(Save.key,JSON.stringify({campaignVersion:19,ranks:{28:'A'},times:{28:52},medals:{28:[true,true,true]},unlocked:29,muted:true})));
- await page.reload();assert.deepEqual(await page.evaluate(()=>({unlocked:Save.data.unlocked,rank:Save.data.ranks[28],time:Save.data.times[28],medals:Save.data.medals[28]})),{unlocked:30,rank:'A',time:52,medals:[true,true,true]});
- results.push('Finished 29-level campaigns unlock level 30 without losing awards');
+ await page.reload();assert.deepEqual(await page.evaluate(()=>({unlocked:Save.data.unlocked,rank:Save.data.ranks[28]||null,time:Save.data.times[28]||null,medals:Save.data.medals[28]||null})),{unlocked:30,rank:null,time:null,medals:null});
+ results.push('Finished 29-level campaigns unlock level 30; records from the old bonus chambers are cleared once');
+ await page.evaluate(()=>{Save.data.ranks[28]='B';Save.data.times[28]=90;Save.save()});await page.reload();
+ assert.deepEqual(await page.evaluate(()=>({rank:Save.data.ranks[28],time:Save.data.times[28]})),{rank:'B',time:90});
+ results.push('Hard-mode bonus chamber awards survive reload');
  assert.deepEqual(errors,[]);console.log(results.join('\n'));console.log(`PASS ${results.length} checks`);
  }finally{await browser.close()}
 })().catch(e=>{console.error(e);process.exitCode=1});

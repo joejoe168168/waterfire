@@ -1,91 +1,143 @@
-// Replay complete two-hero routes in the shipped browser game, including its physics patches.
+// Replay complete two-hero routes for the bonus chambers and temples (levels 20-60) in the shipped browser game.
+// Every route must collect every crystal (including the white one), reach both exits with zero deaths,
+// and finish under par. Routes live in qa-bonus-routes.js.
+//   node qa-bonus-levels.cjs          all forty-one
+//   node qa-bonus-levels.cjs 27       just level 27
+// Uses Microsoft Edge by default; set PW_CHROMIUM=/path/to/chrome to use another Chromium build.
 const {chromium}=require('playwright');
 const fs=require('node:fs');const path=require('node:path');const {pathToFileURL}=require('node:url');
 const assert=require('node:assert/strict');
+const launchOptions=process.env.PW_CHROMIUM?{headless:true,executablePath:process.env.PW_CHROMIUM,args:['--no-sandbox']}:{channel:'msedge',headless:true};
 (async()=>{
  assert.equal(fs.readFileSync(path.join(__dirname,'index.html'),'utf8'),fs.readFileSync(path.join(__dirname,'ember-tide.html'),'utf8'),'Run node sync-entry.cjs');
- const browser=await chromium.launch({channel:'msedge',headless:true});
+ const routesSrc=fs.readFileSync(path.join(__dirname,'qa-bonus-routes.js'),'utf8');
+ const only=Number(process.argv[2])||0;
+ const browser=await chromium.launch(launchOptions);
  try{
- const page=await browser.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
- await page.addInitScript(()=>{window.requestAnimationFrame=()=>0;});
- await page.goto(pathToFileURL(path.join(__dirname,'index.html')).href);
- const results=await page.evaluate(selected=>{
- const results=[];
- const assert={equal(a,b,message='Values differ'){if(a!==b)throw Error(message+': '+a+' !== '+b)},ok(value,message='Assertion failed'){if(!value)throw Error(message)},match(value,pattern){if(!pattern.test(value))throw Error('Invalid map symbols')}};
- assert.equal(LEVELS.length,39);
- assert.equal(new Set(LEVELS.map(d=>d.name)).size,39,'Unique chamber names');
-for(const [i,d] of LEVELS.entries()) {
- assert.equal(d.map.length,20,`Level ${i+1}: height`);
- for(const row of d.map){assert.equal(row.length,32);assert.match(row,/^[#.L~GFWfwrb]+$/);}
- for(const c of 'FWfw')assert.equal(d.map.join('').split(c).length-1,1,`${d.name}: ${c}`);
- assert.ok(d.par>0 && d.hint);
- for(const e of d.ents) if(e.t==='plat' && e.id)assert.ok(d.ents.some(t=>t.id===e.id&&(t.t==='button'||t.t==='lever')),`${d.name}: missing trigger ${e.id}`);
-}
-let level;
-function tick(actions={}) {
- Input.down={};Input.pressed={};
- for(const [kind,c] of Object.entries(actions)){
-  const keys=kind==='fire'?['ArrowLeft','ArrowRight','ArrowUp']:['KeyA','KeyD','KeyW'];
-  if(c.dir)Input.down[keys[c.dir>0?1:0]]=true;
-  if(c.jump){Input.down[keys[2]]=true;if(level[kind].onGround)Input.pressed[keys[2]]=true;}
- }
- level.update(1/120);Input.flush();level.update(1/120);Input.flush();
- assert.equal(level.deaths,0,`${level.def.name}: death at ${positions()}`);
-}
-function positions(){return level.players.map(p=>`${p.kind} (${((p.x+p.w/2)/T).toFixed(2)},${((p.y+p.h)/T).toFixed(2)})`).join(' ');}
-function wait(n=60){for(let i=0;i<n;i++)tick();}
-function until(test){for(let i=0;i<3600;i++){if(test())return;tick();}throw Error('Wait timed out '+positions());}
-function go(kind,x,{jump=false,feet,limit=900}={}){
- const p=level[kind],target=x*T;
- for(let i=0;i<limit;i++){
-  if(level.done)return;
-  const delta=target-(p.x+p.w/2);
-  if(Math.abs(delta)<5 && (!feet || Math.abs((p.y+p.h)/T-feet)<.12) && p.onGround){wait(8);return;}
-  tick({[kind]:{dir:Math.abs(delta)<3?0:Math.sign(delta),jump}});
- }
- throw Error(`${level.def.name}: cannot reach ${kind} ${x},${feet}; ${positions()}`);
-}
-function ride(kind,x,feet){
- const p=level[kind],lift=level.plats.find(s=>s.auto&&s.ax===s.bx&&x*T>s.x&&x*T<s.x+s.w);
- if(lift&&!level.restingOn(p,lift)){
-  const floor=(p.y+p.h)/T;
-  go(kind,(p.x+p.w/2<lift.x?lift.x/T-.8:(lift.x+lift.w)/T+.8));
-  until(()=>Math.abs(lift.y/T-floor)<.15&&lift.dir===1);
-  go(kind,x,{jump:true});
- }else go(kind,x);
- for(let i=0;i<3600;i++){if(Math.abs((p.y+p.h)/T-feet)<.12&&p.onGround)return;tick();}
- throw Error('Lift timed out '+positions());
-}
-function finish(){assert.ok(level.done,`${level.def.name}: doors not occupied; ${positions()}`);assert.ok(level.gems.every(g=>g.got),`${level.def.name}: missed gems ${JSON.stringify(level.gems.filter(g=>!g.got))}`);assert.ok(level.time<level.def.par,`${level.def.name}: A rank must be achievable`);results.push(`${level.index+1} ${level.def.name}: all gems, both exits, ${level.time.toFixed(1)}s`);}
-const routes = [
- ()=>{for(const k of ['fire','water']){go(k,5.8);for(const x of (k==='fire'?[9.5,15.5,19.5,24.5]:[10.5,14.5,20.5,24.5]))go(k,x,{jump:true});go(k,k==='fire'?27:29.5);}},
- ()=>{go('fire',5.5);go('water',16.5);go('fire',21);go('fire',24,{jump:true});go('fire',28.5);go('water',21);go('water',24,{jump:true});go('water',28.5);},
- ()=>{go('fire',6);go('fire',8.5,{jump:true,feet:16});go('fire',12.5);go('fire',18.5);go('fire',27.5);go('water',8.5);go('water',15.7);go('water',18.5,{jump:true,feet:16});go('water',23.5);go('water',29.5);},
- ()=>{for(const k of ['fire','water']){for(const y of [14,9,5]){ride(k,15,y);go(k,k==='fire'?20.5:23.5);}go(k,k==='fire'?26.5:29.5);}},
- ()=>{for(const k of ['fire','water']){go(k,6);until(()=>level.plats[0].x===7*T&&level.plats[0].wait>1);go(k,9,{jump:true});until(()=>level.plats[0].x>=10.8*T);go(k,15.5,{jump:true,feet:17});go(k,16.5);until(()=>level.plats[1].x===18*T&&level.plats[1].wait>1);go(k,20,{jump:true});until(()=>level.plats[1].x>=22.8*T);go(k,27,{jump:true,feet:16});go(k,k==='fire'?27.5:29.5);}},
- ()=>{go('fire',9.6);wait(160);go('fire',13.5,{jump:true});go('fire',27.5);go('water',9);go('water',13.5,{jump:true});go('water',29.5);},
- ()=>{go('fire',5.5);go('water',22.5);go('fire',12.5);go('water',17.5);},
- ()=>{for(const k of ['fire','water']){go(k,7.5);go(k,12,{jump:true,feet:9});go(k,13.5);go(k,20,{jump:true,feet:13});go(k,21.5);go(k,27.5,{jump:true,feet:17});go(k,k==='fire'?27.5:29.5);}},
- ()=>{go('water',9.5);go('fire',5.5);ride('water',9.5,12);go('water',11.7);go('fire',7);go('water',14.5);ride('fire',7,12);go('fire',12,{jump:true,feet:12});go('fire',18);go('fire',21);go('fire',24,{jump:true});go('fire',26.5);go('water',21);go('water',24,{jump:true});go('water',29.5);},
- ()=>{for(const k of ['fire','water']){go(k,6);go(k,9.5,{jump:true});ride(k,12,12);go(k,18);go(k,21);until(()=>level.plats[2].y===12*T&&level.plats[2].wait>1);ride(k,24,5);go(k,k==='fire'?27.5:29.5);}},
- // Further chambers: levels 30–39.
- ()=>{go('fire',5.8);go('fire',8.5,{jump:true});go('fire',12.5,{jump:true});go('fire',14.6,{jump:true});go('water',26.2);go('water',23.5,{jump:true});go('water',19.5,{jump:true});go('water',17,{jump:true});},
- ()=>{go('fire',9.6);wait(120);go('fire',13.5,{jump:true,feet:16});go('fire',14.3);go('fire',16.5,{jump:true,feet:14});go('fire',20,{jump:true,feet:12});go('fire',27.5);go('water',8.4);go('water',11);go('water',13.5,{jump:true,feet:16});go('water',14.3);go('water',16.5,{jump:true,feet:14});go('water',20,{jump:true,feet:12});go('water',29.5);},
- ()=>{go('fire',5.5);go('water',16.5);go('fire',15.5);go('fire',19,{jump:true});go('fire',20.5);go('water',14.8);go('water',11.8,{jump:true});go('water',5.5);go('fire',28.5);go('water',2.5);},
- ()=>{go('fire',7.6);go('water',24.4);wait(150);go('fire',9.5,{jump:true});go('fire',13.5);go('water',22.5,{jump:true});go('water',17.5);},
- ()=>{for(const k of ['fire','water']){go(k,6);until(()=>level.plats[0].x===7*T&&level.plats[0].wait>1.5);go(k,9,{jump:true});until(()=>level.plats[0].y<=14.1*T);go(k,15.5,{jump:true,feet:13});go(k,16.5);until(()=>level.plats[1].x===18*T&&level.plats[1].wait>1.5);go(k,20,{jump:true});until(()=>level.plats[1].x>=23.9*T);go(k,k==='fire'?27.5:29.5,{jump:true,feet:9});}},
- ()=>{go('water',5.5);go('fire',28.5);go('water',28.5);},
- ()=>{for(const k of ['fire','water']){go(k,5.3);go(k,k==='fire'?9.5:10.5,{jump:true,feet:16});go(k,11.4);go(k,k==='fire'?15.5:16.5,{jump:true,feet:14});go(k,17.4);go(k,k==='fire'?21.5:22.5,{jump:true,feet:12});go(k,23.4);go(k,k==='fire'?27.5:29.5,{jump:true,feet:10});}},
- ()=>{go('fire',3.3);until(()=>level.plats[0].y===19*T&&level.plats[0].wait>2);go('fire',8.6);until(()=>level.plats[0].y<=12.05*T);go('fire',16.6);wait(180);go('fire',20.5,{jump:true});go('fire',27.5);ride('water',8.5,12);go('water',16);go('water',21.5,{jump:true});go('water',29.5);},
- ()=>{go('water',23.5);go('fire',6.5);ride('fire',15,12);go('fire',8.5,{jump:true,feet:12});go('fire',4);go('fire',7.5,{jump:true});ride('fire',15,19);go('fire',22.5);go('fire',26.5,{jump:true});go('fire',28.5);ride('water',15,12);go('water',23.5);ride('water',15,6);go('water',2.5);},
- ()=>{go('fire',10.6);wait(180);for(const k of ['fire','water']){go(k,k==='fire'?13.5:14.5,{jump:true});go(k,15.2);go(k,18.5,{jump:true,feet:17});go(k,21.5,{jump:true,feet:15});until(()=>level.plats[1].y===15*T&&level.plats[1].wait>1.5);ride(k,24,7);go(k,k==='fire'?27.5:29.5);}}
-];
-for(let n=0;n<routes.length;n++){
- if(selected && selected!==n+20)continue;
- level=new Level(LEVELS[n+19],n+19);Game.level=level;Game.state="play";Game.solo=false;wait(2);routes[n]();wait(5);finish();
-}
-return results;
- },Number(process.argv[2])||0);
- assert.deepEqual(errors,[]);console.log(results.join('\n'));
+  const page=await browser.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.addInitScript(()=>{window.requestAnimationFrame=()=>0;});
+  await page.goto(pathToFileURL(path.join(__dirname,'index.html')).href);
+  const out=await page.evaluate(({routesSrc,only})=>{
+   if(LEVELS.length!==60)throw Error('expected 60 levels, found '+LEVELS.length);
+   if(new Set(LEVELS.map(d=>d.name)).size!==60)throw Error('chamber names must be unique');
+   for(const [i,d] of LEVELS.entries()){
+    if(d.map.length!==20)throw Error(`Level ${i+1}: height`);
+    for(const row of d.map){if(row.length!==32)throw Error(`Level ${i+1}: width`);if(!/^[#.xiL~GFWfwrb*]+$/.test(row))throw Error(`Level ${i+1}: bad map symbol`);}
+    for(const c of 'FWfw')if(d.map.join('').split(c).length-1!==1)throw Error(`${d.name}: needs exactly one ${c}`);
+    if(!(d.par>0&&d.hint))throw Error(`${d.name}: par and hint required`);
+    for(const e of d.ents)if(['plat','fan','mirror','frost','emitter'].includes(e.t)&&e.id&&!d.ents.some(t=>t.id===e.id&&['button','lever','timer','sensor','ring'].includes(t.t)))throw Error(`${d.name}: missing trigger ${e.id}`);
+   }
+      const report=[];
+      let level=null;
+      const KEYS={fire:['ArrowLeft','ArrowRight','ArrowUp'],water:['KeyA','KeyD','KeyW']};
+      function tick(actions){
+        Input.down={};Input.pressed={};
+        for(const kind of ['fire','water']){
+          const c=actions&&actions[kind];if(!c)continue;
+          const k=KEYS[kind];
+          if(c.dir>0)Input.down[k[1]]=true;else if(c.dir<0)Input.down[k[0]]=true;
+          if(c.jump){Input.down[k[2]]=true;if(level[kind].onGround)Input.pressed[k[2]]=true;}
+        }
+        level.update(1/120);Input.flush();
+        level.update(1/120);Input.flush();
+        if(level.deaths>0)throw Error('DEATH at '+pos());
+      }
+      function pos(){return level.players.map(p=>`${p.kind}(${((p.x+p.w/2)/T).toFixed(2)},${((p.y+p.h)/T).toFixed(2)})`).join(' ')+` t=${level.time.toFixed(1)}`;}
+      function feet(k){return (level[k].y+level[k].h)/T;}
+      function cx(k){return (level[k].x+level[k].w/2)/T;}
+      /* --- DSL --------------------------------------------------------- */
+      function wait(n=60,actions){for(let i=0;i<n;i++){if(level.done)return;tick(actions);}}
+      function until(test,limit=3600,actions){for(let i=0;i<limit;i++){if(level.done||test())return;tick(actions);}throw Error('until timed out '+pos());}
+      // walk one hero to tile-centre x. jump:true = bunny-hop the whole way.
+      function go(kind,x,o={}){
+        const {jump=false,feet:f,limit=1400,tol=5,other=null}=o;
+        const p=level[kind],target=x*T;
+        for(let i=0;i<limit;i++){
+          if(level.done)return;
+          const d=target-(p.x+p.w/2);
+          if(Math.abs(d)<tol&&(f===undefined||Math.abs((p.y+p.h)/T-f)<.13)&&p.onGround){wait(8,other?{[other.kind]:other}:null);return;}
+          const a={[kind]:{dir:Math.abs(d)<3?0:Math.sign(d),jump}};
+          if(other)a[other.kind]=other;
+          tick(a);
+        }
+        throw Error(`${kind} cannot reach ${x}${f!==undefined?'@'+f:''}; ${pos()}`);
+      }
+      // drive both heroes toward their own targets at the same time
+      function goBoth(xf,xw,o={}){
+        const {jump=false,jumpF,jumpW,ff,fw,limit=1600}=o;
+        for(let i=0;i<limit;i++){
+          if(level.done)return;
+          const a={};let done=true;
+          for(const [kind,x,f,j] of [['fire',xf,ff,jumpF===undefined?jump:jumpF],['water',xw,fw,jumpW===undefined?jump:jumpW]]){
+            if(x===undefined||x===null){a[kind]={dir:0};continue;}
+            const p=level[kind],d=x*T-(p.x+p.w/2);
+            const at=Math.abs(d)<5&&(f===undefined?true:Math.abs((p.y+p.h)/T-f)<.13)&&p.onGround;
+            if(!at)done=false;
+            a[kind]={dir:at||Math.abs(d)<3?0:Math.sign(d),jump:at?false:j};
+          }
+          if(done){wait(8);return;}
+          tick(a);
+        }
+        throw Error('goBoth timed out; '+pos());
+      }
+      // single measured jump: press jump once, hold dir for `n` ticks, optionally release jump early
+      function hop(kind,dir,n,o={}){
+        const {hold=n,other=null}=o;
+        for(let i=0;i<n;i++){
+          if(level.done)return;
+          const a={[kind]:{dir,jump:i<hold}};
+          if(other)a[other.kind]=other;
+          tick(a);
+        }
+      }
+      // wait for an auto lift under x to be level with the hero, board it, ride to `feet`
+      function ride(kind,x,f,o={}){
+        const {limit=4200}=o;
+        const p=level[kind];
+        const lift=level.plats.find(s=>x*T>=s.x-2&&x*T<=s.x+s.w+2&&(s.auto||s.pulley||s.by!==s.ay));
+        if(lift&&!level.restingOn(p,lift)){
+          const fl=(p.y+p.h)/T;
+          go(kind,p.x+p.w/2<lift.x?lift.x/T-.8:(lift.x+lift.w)/T+.8);
+          until(()=>Math.abs(lift.y/T-fl)<.2);
+          go(kind,x,{jump:true});
+        }
+        for(let i=0;i<limit;i++){if(level.done)return;if(Math.abs((p.y+p.h)/T-f)<.13&&p.onGround)return;tick();}
+        throw Error(`${kind} lift to ${f} timed out; ${pos()}`);
+      }
+      function plat(i){return level.plats[i];}
+      // walk into portal endpoint i (index into level.portals) and return once teleported out of its twin
+      function portal(kind,i,o={}){
+        const p=level[kind],pt=level.portals[i],dir=Math.sign(pt.cx-(p.x+p.w/2))||1;
+        for(let n=0;n<(o.limit||900);n++){if(p.portalLock===pt.to){wait(2);return;}tick({[kind]:{dir,jump:!!o.jump}});}
+        throw Error(kind+' never went through portal '+i+'; '+pos());
+      }
+      // fairies: send fairy i flying toward tile-centre (x,y); it keeps flying while heroes act
+      function fairy(i,x,y){const f=level.fairies[i];f.tx=x*T;f.ty=y*T;}
+      function fairyAt(i,limit=1800){const f=level.fairies[i];until(()=>Math.hypot(f.x-f.tx,f.y-f.ty)<1,limit);}
+      function lit(id){return !!level.states[id];}
+      function timerLeft(id){const t=level.timers.find(t=>t.id===id);return t?t.left:-1;}
+      /* ----------------------------------------------------------------- */
+      const routes=eval(routesSrc);
+      if(routes.length!==41)throw Error('expected 41 routes, found '+routes.length);
+      for(let n=0;n<41;n++){
+        if(only&&only!==n+20)continue;
+        const d=LEVELS[19+n];
+        level=new Level(d,19+n);Game.level=level;Game.state='play';Game.solo=false;Game.active='fire';
+        try{
+          wait(4);routes[n]();wait(6);
+          if(!level.done)throw Error('doors not both occupied; '+pos());
+          const missed=level.gems.filter(g=>!g.got);
+          if(missed.length)throw Error('missed '+missed.length+' crystal(s)');
+          if(!(level.time<d.par))throw Error(`over par: ${level.time.toFixed(1)}s / ${d.par}s`);
+          report.push({ok:true,line:`${n+20} ${d.name}: all ${level.gems.length} crystals, both exits, no deaths, ${level.time.toFixed(1)}s / par ${d.par}s`});
+        }catch(err){report.push({ok:false,line:`${n+20} ${d.name}: FAIL ${err.message}`});}
+      }
+      return report;
+  },{routesSrc,only});
+  for(const r of out)console.log(r.line);
+  assert.deepEqual(errors,[]);
+  const failed=out.filter(r=>!r.ok).length;
+  if(failed){console.error(`${failed} bonus chamber(s) failed`);process.exitCode=1;}
+  else console.log(`PASS: ${out.length} bonus chamber${out.length===1?'':'s'} completed with every crystal, no deaths, under par.`);
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});
